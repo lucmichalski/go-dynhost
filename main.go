@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -75,7 +74,7 @@ func main() {
 
 	log.Printf("Current DynHost value: %s", currentDynHostIP.String())
 
-	if bytes.Compare(publicIP, currentDynHostIP) == 0 {
+	if publicIP.Equal(currentDynHostIP) {
 		log.Print("The current DynHost record is up-to-date; exiting.")
 		return
 	}
@@ -125,7 +124,7 @@ func getPublicIPv4() (net.IP, error) {
 		return errIP, fmt.Errorf("could not read the response: %v", err)
 	}
 
-	return net.ParseIP(string(ipStrBytes)), nil
+	return net.ParseIP(string(ipStrBytes)).To4(), nil
 }
 
 func updateDynHost(username, password, hostname string, address net.IP) error {
