@@ -27,7 +27,17 @@ func main() {
 		false,
 		"do not actually configure the new DynHost")
 
+	showVersion := flag.Bool(
+		"version",
+		false,
+		"show the version of this software")
+
 	flag.Parse()
+
+	if *showVersion {
+		println("go-dynhost 1.0.0")
+		return
+	}
 
 	cfg, err := ini.Load(*configFile)
 	if err != nil {
