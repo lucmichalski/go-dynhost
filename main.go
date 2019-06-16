@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -22,6 +21,11 @@ func main() {
 		"config",
 		"./config.cfg",
 		"path to the configuration file to uses")
+
+	dryRun := flag.Bool(
+		"dry",
+		false,
+		"do not actually configure the new DynHost")
 
 	flag.Parse()
 
@@ -66,6 +70,11 @@ func main() {
 		return
 	}
 
+	if *dryRun {
+		log.Print("Dry run; exiting.")
+		return
+	}
+
 	if err := updateDynHost(username, password, hostname, publicIP); err != nil {
 		log.Fatalf("Could not update the DynHost record: %v", err)
 	}
@@ -89,7 +98,7 @@ func getDynHostValue(hostname string) (net.IP, error) {
 func getPublicIPv4() (net.IP, error) {
 	errIP := net.IPv4zero
 
-	res, err := http.Get("https://api.ipify.org?format=json")
+	res, err := http.Get("https://api.ipify.org")
 	if err != nil {
 		return errIP, err
 	}
@@ -101,13 +110,12 @@ func getPublicIPv4() (net.IP, error) {
 		return errIP, fmt.Errorf("returned %d", resCode)
 	}
 
-	var m map[string]string
-
-	if err := json.NewDecoder(res.Body).Decode(&m); err != nil {
-		return errIP, err
+	ipStrBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return errIP, fmt.Errorf("could not read the response: %v", err)
 	}
 
-	return net.ParseIP(m["ip"]), nil
+	return net.ParseIP(string(ipStrBytes)), nil
 }
 
 func updateDynHost(username, password, hostname string, address net.IP) error {
